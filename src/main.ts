@@ -1,5 +1,6 @@
 import { Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, SoundifySettings, SoundifySettingsTab } from "./settings";
+import { MediaHelper } from "./mediahelper";
 
 type PluginAudio = HTMLAudioElement | null;
 
@@ -34,6 +35,9 @@ export default class Soundify extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
+
+ 		const mediaHelper = new MediaHelper(this.app, this.manifest.id);
+    	await mediaHelper.ensureMedia(); // unzips media.zip if it exists
 
 		this.openFileAudio = this.createAudioElement("media/openFile/Aqua Pluck.mp3");
 		this.startupAudio = this.createAudioElement("media/startup/Vista.mp3");

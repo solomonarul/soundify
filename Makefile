@@ -18,7 +18,7 @@ b: i
 	@cp src/styles.css build/styles.css
 
 c:
-	@rm -r node_modules build package-lock.json
+	@rm -fr node_modules build package-lock.json media main.js
 
 p:
 	@git tag -d 0.1.0
