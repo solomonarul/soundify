@@ -2,7 +2,7 @@ f:
 	@npx prettier . --write
 
 l:
-	@eslint ./src/
+	@eslint ./src/ --fix
 
 i:
 	@npm i

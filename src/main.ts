@@ -1,5 +1,5 @@
 import { App, Plugin, PluginManifest } from "obsidian";
-import { AudioElement, AudioState } from "./audio";
+import { AudioElement } from "./audio";
 import { DEFAULT_SETTINGS, SoundifySettings, SoundifySettingsTab } from "./settings";
 import { MediaHelper } from "./mediahelper";
 
@@ -73,9 +73,10 @@ export default class Soundify extends Plugin {
 
 	private attachBasesHoverListeners() {
 		document.querySelectorAll(".bases-cards-item").forEach((card) => {
-			if ((card as any)._hoverSoundBound) return;
-			(card as any)._hoverSoundBound = true;
-			card.addEventListener("mouseenter", () => {
+			const cardObject = card as any;
+			if (cardObject._hoverSoundBound) return;
+			cardObject._hoverSoundBound = true;
+			cardObject.addEventListener("mouseenter", () => {
 				this.basesHoverAudio.setPosition(0);
 				this.basesHoverAudio.play();
 			});
