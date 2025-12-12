@@ -19,14 +19,7 @@ export class MediaHelper {
     unzip = async (zipFilePath: string, targetFolder?: string) => {
         const folder = targetFolder
             ? normalizePath(targetFolder)
-            : normalizePath(
-                  [
-                      this.app.vault.configDir,
-                      "plugins",
-                      this.pluginId,
-                      "media",
-                  ].join("/")
-              );
+            : normalizePath([this.app.vault.configDir, "plugins", this.pluginId, "media"].join("/"));
 
         await this.checkOrCreateFolder(folder);
 
@@ -34,9 +27,10 @@ export class MediaHelper {
             type: "application/octet-stream",
         });
 
-        const entries = await new zip.ZipReader(new zip.BlobReader(zipBlob)).getEntries();
+        const zipReader = new zip.ZipReader(new zip.BlobReader(zipBlob));
+        const entries = await zipReader.getEntries();
 
-        // First create directories
+        // Create directories first
         for (const entry of entries.filter((e) => e.directory)) {
             const dirPath = normalizePath([folder, entry.filename].join("/"));
             await this.checkOrCreateFolder(dirPath);
@@ -46,9 +40,10 @@ export class MediaHelper {
         for (const entry of entries.filter((e) => !e.directory)) {
             const filePath = normalizePath([folder, entry.filename].join("/"));
             if (await this.app.vault.adapter.exists(filePath)) continue;
-            if (!entry.getData) continue;
 
-            const fileData = await entry.getData(new zip.BlobWriter("application/octet-stream"));
+            // TypeScript needs a cast because getData only exists on non-directory entries
+            const fileEntry = entry as zip.Entry;
+            const fileData = await fileEntry.getData(new zip.BlobWriter("application/octet-stream"));
             const arrayBuffer = await fileData.arrayBuffer();
             await this.app.vault.adapter.writeBinary(filePath, arrayBuffer);
         }

@@ -24,5 +24,6 @@ data.json
 # Exclude locks.
 package-lock.json
 
-# Exclude builds.
+# Exclude builds and plugin data.
 build/
+media/
