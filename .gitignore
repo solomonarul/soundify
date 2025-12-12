@@ -21,5 +21,8 @@ data.json
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
 
+# Exclude locks.
+package-lock.json
+
 # Exclude builds.
 build/
