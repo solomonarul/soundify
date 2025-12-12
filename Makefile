@@ -19,3 +19,7 @@ b: i
 
 c:
 	@rm -r node_modules build package-lock.json
+
+p:
+	@git tag -a $(ARGS) -m "$(ARGS)"
+	@git push origin $(ARGS)
