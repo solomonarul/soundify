@@ -36,8 +36,8 @@ export default class Soundify extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
 
- 		const mediaHelper = new MediaHelper(this.app, this.manifest.id);
-    	await mediaHelper.ensureMedia(); // unzips media.zip if it exists
+		const mediaHelper = new MediaHelper(this.app, this.manifest.id);
+		await mediaHelper.ensureMedia(); // unzips media.zip if it exists
 
 		this.openFileAudio = this.createAudioElement("media/openFile/Aqua Pluck.mp3");
 		this.startupAudio = this.createAudioElement("media/startup/Vista.mp3");
