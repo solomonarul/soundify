@@ -1,16 +1,19 @@
-import { Plugin } from "obsidian";
+import { App, Plugin, PluginManifest } from "obsidian";
+import { AudioElement, AudioState } from "./audio";
 import { DEFAULT_SETTINGS, SoundifySettings, SoundifySettingsTab } from "./settings";
 import { MediaHelper } from "./mediahelper";
 
-type PluginAudio = HTMLAudioElement | null;
-
 export default class Soundify extends Plugin {
 	public settings: SoundifySettings;
-	private openFileAudioWasPlayed = false;
-	private openFileAudio: PluginAudio = null;
-	private startupAudio: PluginAudio = null;
-	private basesHoverAudio: PluginAudio = null;
+	private openFileAudioFlag: boolean;
+	private openFileAudio: AudioElement;
+	private startupAudio: AudioElement;
+	private basesHoverAudio: AudioElement;
 	private observer: MutationObserver | null = null;
+
+	constructor(app: App, manifest: PluginManifest) {
+		super(app, manifest);
+	}
 
 	private getLocalPath(resource: string): string {
 		return this.app.vault.adapter.getResourcePath(
@@ -18,14 +21,8 @@ export default class Soundify extends Plugin {
 		);
 	}
 
-	private createAudioElement(path: string) {
-		const result = new Audio(this.getLocalPath(path));
-		result.preload = "auto";
-		return result;
-	}
-
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()); // NOTE: only shallow copy.
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()); // NOTE: does only shallow copy.
 	}
 
 	async saveSettings() {
@@ -36,27 +33,27 @@ export default class Soundify extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
 
-		const mediaHelper = new MediaHelper(this.app, this.manifest.id);
-		await mediaHelper.ensureMedia(); // unzips media.zip if it exists
+		const mediaHelper = new MediaHelper(this);
+		await mediaHelper.ensureMedia();
 
-		this.openFileAudio = this.createAudioElement("media/openFile/Aqua Pluck.mp3");
-		this.startupAudio = this.createAudioElement("media/startup/Vista.mp3");
-		this.basesHoverAudio = this.createAudioElement("media/basesHover/click.mp3");
+		this.openFileAudio = new AudioElement(this.getLocalPath("media/openFile/Aqua Pluck.mp3"));
+		this.startupAudio = new AudioElement(this.getLocalPath("media/startup/Vista.mp3"));
+		this.basesHoverAudio = new AudioElement(this.getLocalPath("media/basesHover/click.mp3"));
 
 		this.enableObserver();
 		this.registerEvent(
 			this.app.workspace.on("file-open", () => {
-				if (!this.openFileAudioWasPlayed) {
-					this.openFileAudioWasPlayed = true; // Workaround for this playing even on startup.
+				if (!this.openFileAudioFlag) {
+					this.openFileAudioFlag = true;
 					return;
 				}
-				this.openFileAudio!.currentTime = 0;
-				this.openFileAudio!.play().catch(() => {});
+				this.openFileAudio.setPosition(0);
+				this.openFileAudio.play();
 			}),
 		);
 
-		this.startupAudio!.currentTime = 0;
-		this.startupAudio!.play().catch(() => {});
+		this.startupAudio.setPosition(0);
+		this.startupAudio.play();
 	}
 
 	onunload() {
@@ -76,11 +73,11 @@ export default class Soundify extends Plugin {
 
 	private attachBasesHoverListeners() {
 		document.querySelectorAll(".bases-cards-item").forEach((card) => {
-			if ((card as any)._hoverSoundBound) return; // Prevent double-binding
+			if ((card as any)._hoverSoundBound) return;
 			(card as any)._hoverSoundBound = true;
 			card.addEventListener("mouseenter", () => {
-				this.basesHoverAudio!.currentTime = 0;
-				this.basesHoverAudio!.play().catch(() => {});
+				this.basesHoverAudio.setPosition(0);
+				this.basesHoverAudio.play();
 			});
 		});
 	}
