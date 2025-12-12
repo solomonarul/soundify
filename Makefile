@@ -21,5 +21,7 @@ c:
 	@rm -r node_modules build package-lock.json
 
 p:
-	@git tag -a $(ARGS) -m "$(ARGS)"
-	@git push origin $(ARGS)
+	@git tag -d 0.1.0
+	@git push origin :refs/tags/0.1.0
+	@git tag -a 0.1.0 -m "0.1.0"
+	@git push origin 0.1.0
