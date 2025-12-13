@@ -15,6 +15,10 @@ export default class Soundify extends Plugin {
 		super(app, manifest);
 	}
 
+	destructor() {
+		this.observer?.disconnect();
+	}
+
 	private getLocalPath(resource: string): string {
 		return this.app.vault.adapter.getResourcePath(
 			`.obsidian/plugins/${this.manifest.id}/${resource}`,
@@ -37,8 +41,12 @@ export default class Soundify extends Plugin {
 		await mediaHelper.ensureMedia();
 
 		this.openFileAudio = new AudioElement(this.getLocalPath("media/openFile/Aqua Pluck.mp3"));
-		this.startupAudio = new AudioElement(this.getLocalPath("media/startup/Vista.mp3"));
-		this.basesHoverAudio = new AudioElement(this.getLocalPath("media/basesHover/click.mp3"));
+		this.startupAudio = new AudioElement(
+			this.getLocalPath("media/startup/Breathy Startup.mp3"),
+		);
+		this.basesHoverAudio = new AudioElement(
+			this.getLocalPath("media/basesHover/Abstract2.mp3"),
+		);
 
 		this.enableObserver();
 		this.registerEvent(

@@ -1,4 +1,4 @@
-import { normalizePath, App } from "obsidian";
+import { normalizePath } from "obsidian";
 import * as zip from "@zip.js/zip.js";
 import Soundify from "./main";
 
@@ -10,8 +10,11 @@ export class MediaHelper {
 	}
 
 	checkOrCreateFolder = async (path: string) => {
-		if (!(await this.plugin.app.vault.adapter.exists(path)))
+		if (!(await this.plugin.app.vault.adapter.exists(path))) {
 			await this.plugin.app.vault.adapter.mkdir(path);
+			return true;
+		}
+		return false;
 	};
 
 	unzip = async (zipFilePath: string, targetFolder?: string) => {
@@ -25,8 +28,8 @@ export class MediaHelper {
 						"media",
 					].join("/"),
 				);
-
-		await this.checkOrCreateFolder(folder);
+		// Check if the media folder exists, if it exists let's stop.
+		if (!(await this.checkOrCreateFolder(folder))) return;
 
 		const zipBlob = new Blob([await this.plugin.app.vault.adapter.readBinary(zipFilePath)], {
 			type: "application/octet-stream",
