@@ -7,3 +7,5 @@ This is a WIP idea and only specific sounds on specific events are added.
 I have no idea what I am doing but this is fun. I need some good Frutiger Aero sounds.
 
 For using this while developing, check out the Makefile.
+
+If you are using the plugin and want to suggest new features / found bugs, please open an issue.

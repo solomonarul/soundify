@@ -1,4 +1,4 @@
-import { DataAdapter } from "obsidian";
+import { DataAdapter, ListedFiles } from "obsidian";
 import * as zip from "@zip.js/zip.js";
 
 export class FileHandler {
@@ -32,6 +32,10 @@ export class FileHandler {
 			return false;
 		}
 		return true;
+	}
+
+	public async folderGetContents(path: string): Promise<ListedFiles> {
+		return this.adapter.list(path);
 	}
 
 	public async readBinary(path: string): Promise<ArrayBuffer> {

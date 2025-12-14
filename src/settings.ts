@@ -19,25 +19,32 @@ export class SoundifySettingsTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	display(): void {
+	async display(): Promise<void> {
+		if (!this.plugin.file) return;
+
 		const { containerEl: container } = this;
 
 		container.empty();
 
+		const mp3Folder = this.plugin.file.getLocalPath("media/basesHover");
+		const folderContents = await this.plugin.file.folderGetContents(mp3Folder);
+		const mp3Files = folderContents.files.filter((f) => f.endsWith(".mp3"));
+		const mp3List: Array<string> = [];
+		for (const mp3 of mp3Files) {
+			mp3List.push(mp3.split("/").pop()!);
+		}
+
 		new Setting(container).setName("Bases").setHeading();
-		new Setting(container).setName("On Hover").addDropdown((dropdown) =>
-			dropdown
-				.addOption("none", "None")
-				.addOption("custom", "Custom")
-				.addOption("Abstract2.mp3", "Abstract2")
-				.addOption("Click.mp3", "Click")
-				.setValue(this.plugin.settings.bases_on_hover)
-				.onChange(async (value) => {
-					this.plugin.settings.bases_on_hover = value;
-					await this.plugin.saveSettings();
-					this.display();
-				}),
-		);
+		new Setting(container).setName("On Hover").addDropdown(async (dropdown) => {
+			dropdown.addOption("none", "None").addOption("custom", "Custom");
+			for (const mp3 of mp3List) dropdown.addOption(mp3, mp3.replace(".mp3", ""));
+			dropdown.setValue(this.plugin.settings.bases_on_hover);
+			dropdown.onChange(async (value) => {
+				this.plugin.settings.bases_on_hover = value;
+				await this.plugin.saveSettings();
+				this.display();
+			});
+		});
 
 		if (this.plugin.settings.bases_on_hover == "custom") {
 			new Setting(container).setName("On Hover Custom Path").addText((text) =>

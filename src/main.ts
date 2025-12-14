@@ -4,7 +4,7 @@ import { App, Plugin, PluginManifest } from "obsidian";
 import { DEFAULT_SETTINGS, SoundifySettings, SoundifySettingsTab } from "./settings";
 
 export default class Soundify extends Plugin {
-	public file: FileHandler | null = null;
+	public file: FileHandler;
 	public settings: SoundifySettings;
 	private openFileAudio: AudioElement;
 	private startupAudio: AudioElement;
@@ -29,8 +29,6 @@ export default class Soundify extends Plugin {
 	}
 
 	async onload() {
-		if (!this.file) return;
-
 		console.log("Unarchiving media.zip.");
 		await this.file.unzipLocalToLocal("media.zip");
 
