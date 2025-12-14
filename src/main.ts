@@ -1,11 +1,11 @@
+import { AudioElement, AudioState } from "./audio";
+import { FileHandler } from "./filehandler";
 import { App, Plugin, PluginManifest } from "obsidian";
-import { AudioElement } from "./audio";
 import { DEFAULT_SETTINGS, SoundifySettings, SoundifySettingsTab } from "./settings";
-import { MediaHelper } from "./mediahelper";
 
 export default class Soundify extends Plugin {
+	public file: FileHandler | null = null;
 	public settings: SoundifySettings;
-	private openFileAudioFlag: boolean;
 	private openFileAudio: AudioElement;
 	private startupAudio: AudioElement;
 	private basesHoverAudio: AudioElement;
@@ -13,16 +13,11 @@ export default class Soundify extends Plugin {
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
+		this.file = new FileHandler(this.app.vault.adapter, manifest.id);
 	}
 
 	destructor() {
 		this.observer?.disconnect();
-	}
-
-	private getLocalPath(resource: string): string {
-		return this.app.vault.adapter.getResourcePath(
-			`.obsidian/plugins/${this.manifest.id}/${resource}`,
-		);
 	}
 
 	async loadSettings() {
@@ -34,27 +29,28 @@ export default class Soundify extends Plugin {
 	}
 
 	async onload() {
+		if (!this.file) return;
+
+		console.log("Unarchiving media.zip.");
+		await this.file.unzipLocalToLocal("media.zip");
+
 		await this.loadSettings();
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
 
-		const mediaHelper = new MediaHelper(this);
-		await mediaHelper.ensureMedia();
-
-		this.openFileAudio = new AudioElement(this.getLocalPath("media/openFile/Aqua Pluck.mp3"));
+		this.openFileAudio = new AudioElement(
+			this.file.getLocalResource("media/openFile/Aqua Pluck.mp3"),
+		);
 		this.startupAudio = new AudioElement(
-			this.getLocalPath("media/startup/Breathy Startup.mp3"),
+			this.file.getLocalResource("media/startup/Breathy Startup.mp3"),
 		);
 		this.basesHoverAudio = new AudioElement(
-			this.getLocalPath("media/basesHover/Abstract2.mp3"),
+			this.file.getLocalResource("media/basesHover/Abstract2.mp3"),
 		);
 
 		this.enableObserver();
 		this.registerEvent(
 			this.app.workspace.on("file-open", () => {
-				if (!this.openFileAudioFlag) {
-					this.openFileAudioFlag = true;
-					return;
-				}
+				if (this.startupAudio.state == AudioState.PLAYING) return;
 				this.openFileAudio.setPosition(0);
 				this.openFileAudio.play();
 			}),
