@@ -2,11 +2,13 @@ import Soundify from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
 export interface SoundifySettings {
-	sampleValue: string;
+	bases_on_hover: string;
+	bases_on_hover_custom_path: string;
 }
 
 export const DEFAULT_SETTINGS: Partial<SoundifySettings> = {
-	sampleValue: "Lorem ipsum",
+	bases_on_hover: "none",
+	bases_on_hover_custom_path: "",
 };
 
 export class SoundifySettingsTab extends PluginSettingTab {
@@ -18,18 +20,34 @@ export class SoundifySettingsTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const { containerEl } = this;
+		const { containerEl: container } = this;
 
-		containerEl.empty();
+		container.empty();
 
-		new Setting(containerEl).setName("Default value").addText((text) =>
-			text
-				.setPlaceholder("Lorem ipsum")
-				.setValue(this.plugin.settings.sampleValue)
+		new Setting(container).setName("Bases").setHeading();
+		new Setting(container).setName("On Hover").addDropdown((dropdown) =>
+			dropdown
+				.addOption("none", "None")
+				.addOption("custom", "Custom")
+				.addOption("Abstract2.mp3", "Abstract2")
+				.addOption("Click.mp3", "Click")
+				.setValue(this.plugin.settings.bases_on_hover)
 				.onChange(async (value) => {
-					this.plugin.settings.sampleValue = value;
+					this.plugin.settings.bases_on_hover = value;
 					await this.plugin.saveSettings();
+					this.display();
 				}),
 		);
+
+		if (this.plugin.settings.bases_on_hover == "custom") {
+			new Setting(container).setName("On Hover Custom Path").addText((text) =>
+				text
+					.setValue(this.plugin.settings.bases_on_hover_custom_path)
+					.onChange(async (value) => {
+						this.plugin.settings.bases_on_hover_custom_path = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+		}
 	}
 }
