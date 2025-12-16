@@ -1,7 +1,7 @@
 {
 	"id": "soundify",
 	"name": "Soundify",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"minAppVersion": "0.15.0",
 	"description": "Allows for sounds to play on specific events.",
 	"author": "Solomonarul",

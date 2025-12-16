@@ -21,7 +21,7 @@ c:
 	@rm -fr node_modules build package-lock.json media main.js
 
 p:
-	@git tag -d 0.1.0
-	@git push origin :refs/tags/0.1.0
-	@git tag -a 0.1.0 -m "0.1.0"
-	@git push origin 0.1.0
+	@git tag -d 0.1.1
+	@git push origin :refs/tags/0.1.1
+	@git tag -a 0.1.1 -m "0.1.1"
+	@git push origin 0.1.1

@@ -29,7 +29,9 @@ export class SoundSetting extends Listening<SoundSetting> {
 		const mp3Files = folderContents.files.filter((f) => f.endsWith(".mp3")); // TODO: do not scan on every display.
 		const mp3List: Array<string> = [];
 		for (const mp3 of mp3Files) {
-			mp3List.push(mp3.split("/").pop()!);
+			const mp3Name = mp3.split("/").pop();
+			if (!mp3Name) continue;
+			mp3List.push(mp3Name);
 		} // TODO: not only mp3s.
 
 		new Setting(parent.containerEl).setName(this.actionText).addDropdown(async (dropdown) => {
