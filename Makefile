@@ -1,3 +1,6 @@
+r: i
+	@npm run dev
+
 f:
 	@npx prettier . --write
 
@@ -6,9 +9,6 @@ l:
 
 i:
 	@npm i
-
-r: i
-	@npm run dev
 
 b: i
 	@npm run build

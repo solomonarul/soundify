@@ -29,14 +29,15 @@ export default class Soundify extends Plugin {
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
 
 		this.openFileAudio = new AudioElement(
-			this.file.getLocalResource("media/openFile/Aqua Pluck.mp3"),
+			this.file.getLocalResource(this.settings.sounds["file_open"].getPath()),
 		);
 		this.startupAudio = new AudioElement(
-			this.file.getLocalResource("media/startup/Breathy Startup.mp3"),
+			this.file.getLocalResource(this.settings.sounds["startup"].getPath()),
 		);
 		this.basesHoverAudio = new AudioElement(
-			this.file.getLocalResource("media/basesHover/Abstract2.mp3"),
+			this.file.getLocalResource(this.settings.sounds["bases_hover"].getPath()),
 		);
+		// TODO: these should change on the fly.
 
 		this.enableObserver();
 		this.registerEvent(
