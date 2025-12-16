@@ -1,4 +1,4 @@
-import { DataAdapter, ListedFiles } from "obsidian";
+import { DataAdapter, ListedFiles, normalizePath } from "obsidian";
 import * as zip from "@zip.js/zip.js";
 
 export class FileHandler {
@@ -23,7 +23,7 @@ export class FileHandler {
 	}
 
 	public async folderCreate(path: string) {
-		await this.adapter.mkdir(path);
+		await this.adapter.mkdir(normalizePath(path));
 	}
 
 	public async folderExistsOrCreate(path: string): Promise<boolean> {
@@ -32,6 +32,11 @@ export class FileHandler {
 			return false;
 		}
 		return true;
+	}
+
+	public async folderDelete(path: string) {
+		if (!(await this.exists(path))) return;
+		await this.adapter.rmdir(path, true);
 	}
 
 	public async folderGetContents(path: string): Promise<ListedFiles> {
@@ -46,6 +51,28 @@ export class FileHandler {
 		return this.adapter.writeBinary(path, data);
 	}
 
+	public async readString(path: string): Promise<string | null> {
+		let result: string | null = null;
+		try {
+			result = await this.adapter.read(path);
+		} catch {
+			console.warn(`File at path ${path} doesn't exist.`);
+		}
+		return result;
+	}
+
+	public async writeString(path: string, contents: string) {
+		const dirPath = path.substring(0, path.lastIndexOf("/"));
+		if (dirPath) await this.adapter.mkdir(dirPath).catch(() => {});
+		await this.adapter.write(path, contents);
+	}
+
+	public async fileFingerprint(path: string) {
+		const stat = await this.adapter.stat(path);
+		if (!stat) return "";
+		return `${stat.size}:${stat.mtime}`;
+	}
+
 	public async removeExtensionFromPath(path: string): Promise<string> {
 		return path.replace(/\.[^/.]+$/, "");
 	}
@@ -58,11 +85,7 @@ export class FileHandler {
 		const localPath = this.getLocalPath(path);
 		const localFolder = this.getLocalPath(targetPath);
 
-		// Check if the target folder already exists.
-		if (await this.folderExistsOrCreate(localFolder)) {
-			console.info("Unarchived folder exists locally, skipping...");
-			return;
-		}
+		if (!this.exists(localPath)) console.error(`Archive at path ${localPath} doesn't exist.`);
 
 		const zipReader = new zip.ZipReader(
 			new zip.BlobReader(
@@ -73,6 +96,7 @@ export class FileHandler {
 		);
 
 		// Create folder structure first.
+		await this.folderExistsOrCreate(localFolder);
 		const entries = await zipReader.getEntries();
 		for (const entry of entries.filter((e) => e.directory)) {
 			const dirPath = this.getLocalPath(`media/${entry.filename}`);
@@ -89,6 +113,6 @@ export class FileHandler {
 			await this.writeBinary(filePath, await fileData.arrayBuffer());
 		}
 
-		console.info("Unzipped media.zip.");
+		console.info(`Unzipped ${path}.`);
 	}
 }

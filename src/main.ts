@@ -1,18 +1,17 @@
 import { MaybeAudioElement, AudioElement, AudioState } from "./audio";
 import { FileHandler } from "./filehandler";
 import { App, Plugin, PluginManifest } from "obsidian";
-import { SoundifySettings, SoundifySettingsTab } from "./settings";
+import { SoundifySettings, SoundifySettingsTab, SoundSetting } from "./settings";
 
 export default class Soundify extends Plugin {
 	public file: FileHandler;
 	public settings: SoundifySettings;
-	private openFileAudio: MaybeAudioElement;
-	private startupAudio: MaybeAudioElement;
-	private basesHoverAudio: MaybeAudioElement;
+	private sounds: Record<string, MaybeAudioElement>;
 	private observer: MutationObserver | null = null;
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
+		this.sounds = {};
 		this.settings = new SoundifySettings();
 		this.file = new FileHandler(this.app.vault.adapter, manifest.id);
 	}
@@ -21,52 +20,60 @@ export default class Soundify extends Plugin {
 		if (this.observer) this.observer.disconnect();
 	}
 
+	ensure_sound_loaded(sound: string): void {
+		const updateAudio = (setting: SoundSetting) => {
+			this.sounds[sound] = setting.isValid()
+				? new AudioElement(this.file.getLocalResource(setting.getPath()))
+				: null;
+		};
+		const setting = this.settings.sounds[sound];
+		updateAudio(setting);
+		setting.addListener(updateAudio);
+	}
+
+	async unarchive_media(path: string): Promise<void> {
+		console.log(`Unarchiving ${path}.`);
+		await this.file.unzipLocalToLocal(path);
+	}
+
 	async onload() {
-		console.log("Unarchiving media.zip.");
-		await this.file.unzipLocalToLocal("media.zip");
+		const zipPath = this.file.getLocalPath("media.zip");
+		const mediaPath = this.file.getLocalPath("media");
+		const hashPath: string = this.file.getLocalPath("media/.hash");
+		const existingHash: string | null = await this.file.readString(hashPath);
+		const zipFingerprint: string = await this.file.fileFingerprint(zipPath);
+
+		if (!this.file.exists(mediaPath) || !existingHash || existingHash != zipFingerprint) {
+			await this.file.folderDelete(mediaPath);
+			await this.file.folderCreate(mediaPath);
+			await this.unarchive_media("media.zip");
+			await this.file.writeString(hashPath, zipFingerprint);
+		} else {
+			console.info("Media folder exists and is up to date.");
+		}
 
 		await this.settings.load(this);
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
 
-		this.openFileAudio = new AudioElement(
-			this.file.getLocalResource(this.settings.sounds["file_open"].getPath()),
-		);
-		this.settings.sounds["file_open"].addListener((s) => {
-			this.openFileAudio = new AudioElement(
-				this.file.getLocalResource(this.settings.sounds["file_open"].getPath()),
-			);
-		});
-		this.startupAudio = new AudioElement(
-			this.file.getLocalResource(this.settings.sounds["startup"].getPath()),
-		);
-		this.settings.sounds["startup"].addListener((s) => {
-			this.startupAudio = new AudioElement(
-				this.file.getLocalResource(this.settings.sounds["startup"].getPath()),
-			);
-		});
-		this.basesHoverAudio = new AudioElement(
-			this.file.getLocalResource(this.settings.sounds["bases_hover"].getPath()),
-		);
-		this.settings.sounds["bases_hover"].addListener((s) => {
-			this.basesHoverAudio = new AudioElement(
-				this.file.getLocalResource(this.settings.sounds["bases_hover"].getPath()),
-			);
-			this.attachBasesHoverListeners();
-		});
-		// TODO: this is kinda ugly.
+		this.ensure_sound_loaded("bases_hover");
+		this.ensure_sound_loaded("file_open");
+		this.ensure_sound_loaded("startup");
 
 		this.enableObserver();
 		this.registerEvent(
 			this.app.workspace.on("file-open", () => {
-				if (!this.openFileAudio) return;
-				if (this.startupAudio && this.startupAudio.state == AudioState.PLAYING) return;
-				this.openFileAudio.setPosition(0);
-				this.openFileAudio.play();
+				if (!this.sounds["file_open"]) return;
+				if (this.sounds["startup"] && this.sounds["startup"].state == AudioState.PLAYING)
+					return;
+				this.sounds["file_open"].setPosition(0);
+				this.sounds["file_open"].play();
 			}),
 		);
 
-		this.startupAudio.setPosition(0);
-		this.startupAudio.play();
+		if (this.sounds["startup"]) {
+			this.sounds["startup"].setPosition(0);
+			this.sounds["startup"].play();
+		}
 	}
 
 	onunload() {
@@ -91,9 +98,9 @@ export default class Soundify extends Plugin {
 			};
 			if (el._hoverSoundHandler) el.removeEventListener("mouseenter", el._hoverSoundHandler);
 			el._hoverSoundHandler = () => {
-				if (!this.basesHoverAudio) return;
-				this.basesHoverAudio.setPosition(0);
-				this.basesHoverAudio.play();
+				if (!this.sounds["bases_hover"]) return;
+				this.sounds["bases_hover"].setPosition(0);
+				this.sounds["bases_hover"].play();
 			};
 			el.addEventListener("mouseenter", el._hoverSoundHandler);
 		});

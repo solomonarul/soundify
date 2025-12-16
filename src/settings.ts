@@ -60,6 +60,10 @@ export class SoundSetting extends Listening<SoundSetting> {
 		}
 	}
 
+	isValid(): boolean {
+		return this.data.type != "none";
+	}
+
 	getPath(): string {
 		switch (this.data.type) {
 			case "none":
@@ -75,7 +79,7 @@ export class SoundSetting extends Listening<SoundSetting> {
 export const DEFAULT_SETTINGS: Partial<SoundifySettings> = {
 	sounds: {
 		startup: new SoundSetting("media/startup", "Startup"),
-		bases_hover: new SoundSetting("media/basesHover", "Hover"),
+		bases_hover: new SoundSetting("media/basesHover", "Card Hover"),
 		file_open: new SoundSetting("media/openFile", "Open"),
 	},
 };
@@ -91,6 +95,8 @@ export class SoundifySettings {
 			if (data?.sounds?.[key]) {
 				const serialized = data.sounds[key] as SerializableSetting;
 				setting.data = serialized;
+				if (!plugin.file.exists(setting.getPath()))
+					setting.data = new SerializableSetting();
 			}
 			this.sounds[key] = setting;
 		}
