@@ -2,9 +2,7 @@
 
 Play sounds on specific events.
 
-This is a WIP idea and only specific sounds on specific events are added.
-
-I have no idea what I am doing but this is fun. I need some good Frutiger Aero sounds.
+The sounds can be changed from the plugin settings to any preset / custom sound.
 
 For using this while developing, check out the Makefile.
 

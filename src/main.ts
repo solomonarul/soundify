@@ -31,7 +31,7 @@ export default class Soundify extends Plugin {
 		setting.addListener(updateAudio);
 	}
 
-	async unarchive_media(path: string): Promise<void> {
+	async unarchive_media(path: string) {
 		console.log(`Unarchiving ${path}.`);
 		await this.file.unzipLocalToLocal(path);
 	}

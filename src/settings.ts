@@ -23,7 +23,7 @@ export class SoundSetting extends Listening<SoundSetting> {
 		this.actionText = actionText;
 	}
 
-	async display(parent: SoundifySettingsTab): Promise<void> {
+	async display(parent: SoundifySettingsTab) {
 		const mp3Folder = parent.plugin.file.getLocalPath(this.mediaFolder);
 		const folderContents = await parent.plugin.file.folderGetContents(mp3Folder);
 		const mp3Files = folderContents.files.filter((f) => f.endsWith(".mp3")); // TODO: do not scan on every display.
@@ -89,7 +89,7 @@ export const DEFAULT_SETTINGS: Partial<SoundifySettings> = {
 export class SoundifySettings {
 	sounds: Record<string, SoundSetting> = {};
 
-	async load(plugin: Soundify): Promise<void> {
+	async load(plugin: Soundify) {
 		const data = await plugin.loadData();
 		this.sounds = {};
 		for (const [key, defaultSetting] of Object.entries(DEFAULT_SETTINGS.sounds ?? {})) {
@@ -104,7 +104,7 @@ export class SoundifySettings {
 		}
 	}
 
-	async save(plugin: Soundify): Promise<void> {
+	async save(plugin: Soundify) {
 		const serialized: Record<string, SerializableSetting> = {};
 		for (const [key, setting] of Object.entries(this.sounds)) serialized[key] = setting.data;
 		await plugin.saveData({ sounds: serialized });
@@ -119,7 +119,7 @@ export class SoundifySettingsTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	async display(): Promise<void> {
+	async display() {
 		if (!this.plugin.file) return;
 		this.containerEl.empty();
 		new Setting(this.containerEl).setName("General").setHeading();
