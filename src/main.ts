@@ -1,4 +1,4 @@
-import { AudioElement, AudioState } from "./audio";
+import { MaybeAudioElement, AudioElement, AudioState } from "./audio";
 import { FileHandler } from "./filehandler";
 import { App, Plugin, PluginManifest } from "obsidian";
 import { SoundifySettings, SoundifySettingsTab } from "./settings";
@@ -6,9 +6,9 @@ import { SoundifySettings, SoundifySettingsTab } from "./settings";
 export default class Soundify extends Plugin {
 	public file: FileHandler;
 	public settings: SoundifySettings;
-	private openFileAudio: AudioElement;
-	private startupAudio: AudioElement;
-	private basesHoverAudio: AudioElement;
+	private openFileAudio: MaybeAudioElement;
+	private startupAudio: MaybeAudioElement;
+	private basesHoverAudio: MaybeAudioElement;
 	private observer: MutationObserver | null = null;
 
 	constructor(app: App, manifest: PluginManifest) {
@@ -31,18 +31,35 @@ export default class Soundify extends Plugin {
 		this.openFileAudio = new AudioElement(
 			this.file.getLocalResource(this.settings.sounds["file_open"].getPath()),
 		);
+		this.settings.sounds["file_open"].addListener((s) => {
+			this.openFileAudio = new AudioElement(
+				this.file.getLocalResource(this.settings.sounds["file_open"].getPath()),
+			);
+		});
 		this.startupAudio = new AudioElement(
 			this.file.getLocalResource(this.settings.sounds["startup"].getPath()),
 		);
+		this.settings.sounds["startup"].addListener((s) => {
+			this.startupAudio = new AudioElement(
+				this.file.getLocalResource(this.settings.sounds["startup"].getPath()),
+			);
+		});
 		this.basesHoverAudio = new AudioElement(
 			this.file.getLocalResource(this.settings.sounds["bases_hover"].getPath()),
 		);
-		// TODO: these should change on the fly.
+		this.settings.sounds["bases_hover"].addListener((s) => {
+			this.basesHoverAudio = new AudioElement(
+				this.file.getLocalResource(this.settings.sounds["bases_hover"].getPath()),
+			);
+			this.attachBasesHoverListeners();
+		});
+		// TODO: this is kinda ugly.
 
 		this.enableObserver();
 		this.registerEvent(
 			this.app.workspace.on("file-open", () => {
-				if (this.startupAudio.state == AudioState.PLAYING) return;
+				if (!this.openFileAudio) return;
+				if (this.startupAudio && this.startupAudio.state == AudioState.PLAYING) return;
 				this.openFileAudio.setPosition(0);
 				this.openFileAudio.play();
 			}),
@@ -69,13 +86,16 @@ export default class Soundify extends Plugin {
 
 	private attachBasesHoverListeners() {
 		document.querySelectorAll(".bases-cards-item").forEach((card) => {
-			const cardObject = card as any;
-			if (cardObject._hoverSoundBound) return;
-			cardObject._hoverSoundBound = true;
-			cardObject.addEventListener("mouseenter", () => {
+			const el = card as HTMLElement & {
+				_hoverSoundHandler?: EventListener;
+			};
+			if (el._hoverSoundHandler) el.removeEventListener("mouseenter", el._hoverSoundHandler);
+			el._hoverSoundHandler = () => {
+				if (!this.basesHoverAudio) return;
 				this.basesHoverAudio.setPosition(0);
 				this.basesHoverAudio.play();
-			});
+			};
+			el.addEventListener("mouseenter", el._hoverSoundHandler);
 		});
 	}
 }

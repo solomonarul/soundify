@@ -31,3 +31,5 @@ export class AudioElement {
 		this.state = AudioState.PLAYING;
 	}
 }
+
+export type MaybeAudioElement = AudioElement | null;

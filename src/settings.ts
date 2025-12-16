@@ -1,4 +1,5 @@
 import Soundify from "./main";
+import { Listening } from "./listener";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
 export class SerializableSetting {
@@ -10,12 +11,13 @@ export class SerializableSetting {
 	path: string;
 }
 
-export class SoundSetting {
+export class SoundSetting extends Listening<SoundSetting> {
 	data: SerializableSetting;
 	mediaFolder: string;
 	actionText: string;
 
 	constructor(mediaFolder: string, actionText: string) {
+		super();
 		this.data = new SerializableSetting();
 		this.mediaFolder = mediaFolder;
 		this.actionText = actionText;
@@ -41,6 +43,7 @@ export class SoundSetting {
 				this.data.type = value;
 				await parent.plugin.settings.save(parent.plugin);
 				if (shouldRefresh) await parent.display(); // Reload display menu on the fly.
+				this.notify(this);
 			});
 		});
 
@@ -51,6 +54,7 @@ export class SoundSetting {
 					text.setValue(this.data.path).onChange(async (value) => {
 						this.data.path = value;
 						await parent.plugin.settings.save(parent.plugin);
+						this.notify(this);
 					}),
 				);
 		}
