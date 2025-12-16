@@ -1,15 +1,103 @@
 import Soundify from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
-export interface SoundifySettings {
-	bases_on_hover: string;
-	bases_on_hover_custom_path: string;
+export interface SerializableSetting {
+	type: string;
+	path: string;
+}
+
+export class SoundSetting implements SerializableSetting {
+	public type: string;
+	public path: string;
+	mediaFolder: string;
+	actionText: string;
+
+	constructor(mediaFolder: string, actionText: string) {
+		this.type = "none";
+		this.path = "";
+		this.mediaFolder = mediaFolder;
+		this.actionText = actionText;
+	}
+
+	async display(parent: SoundifySettingsTab): Promise<void> {
+		const mp3Folder = parent.plugin.file.getLocalPath(this.mediaFolder);
+		const folderContents = await parent.plugin.file.folderGetContents(mp3Folder);
+		const mp3Files = folderContents.files.filter((f) => f.endsWith(".mp3"));
+		const mp3List: Array<string> = [];
+		for (const mp3 of mp3Files) {
+			mp3List.push(mp3.split("/").pop()!);
+		} // TODO: not only mp3s.
+
+		new Setting(parent.containerEl).setName(this.actionText).addDropdown(async (dropdown) => {
+			dropdown.addOption("none", "None").addOption("custom", "Custom");
+			for (const mp3 of mp3List) dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
+			dropdown.setValue(this.type);
+			dropdown.onChange(async (value) => {
+				this.type = value;
+				await parent.plugin.settings.save(parent.plugin);
+				await parent.display(); // Reload display menu on the fly.
+			});
+		});
+
+		if (this.type == "custom") {
+			new Setting(parent.containerEl)
+				.setName(`${this.actionText} Custom Path`)
+				.addText((text) =>
+					text.setValue(this.path).onChange(async (value) => {
+						this.path = value;
+						await parent.plugin.settings.save(parent.plugin);
+					}),
+				);
+		}
+	}
 }
 
 export const DEFAULT_SETTINGS: Partial<SoundifySettings> = {
-	bases_on_hover: "none",
-	bases_on_hover_custom_path: "",
+	sounds: {
+		startup: new SoundSetting("media/startup", "Startup"),
+		bases_hover: new SoundSetting("media/basesHover", "Hover"),
+		file_open: new SoundSetting("media/openFile", "Open"),
+	},
 };
+
+export class SoundifySettings {
+	sounds: Record<string, SoundSetting> = {};
+
+	async load(plugin: Soundify): Promise<void> {
+		const data = await plugin.loadData();
+
+		this.sounds = {};
+
+		// Rebuild from defaults
+		for (const [key, defaultSetting] of Object.entries(DEFAULT_SETTINGS.sounds ?? {})) {
+			const setting = new SoundSetting(defaultSetting.mediaFolder, defaultSetting.actionText);
+
+			// Apply serialized values only
+			if (data?.sounds?.[key]) {
+				const serialized = data.sounds[key] as SerializableSetting;
+				setting.type = serialized.type ?? setting.type;
+				setting.path = serialized.path ?? setting.path;
+			}
+
+			this.sounds[key] = setting;
+		}
+	}
+
+	async save(plugin: Soundify): Promise<void> {
+		const serialized: Record<string, SerializableSetting> = {};
+
+		for (const [key, setting] of Object.entries(this.sounds)) {
+			serialized[key] = {
+				type: setting.type,
+				path: setting.path,
+			};
+		}
+
+		await plugin.saveData({
+			sounds: serialized,
+		});
+	}
+}
 
 export class SoundifySettingsTab extends PluginSettingTab {
 	plugin: Soundify;
@@ -21,40 +109,12 @@ export class SoundifySettingsTab extends PluginSettingTab {
 
 	async display(): Promise<void> {
 		if (!this.plugin.file) return;
-
-		const { containerEl: container } = this;
-
-		container.empty();
-
-		const mp3Folder = this.plugin.file.getLocalPath("media/basesHover");
-		const folderContents = await this.plugin.file.folderGetContents(mp3Folder);
-		const mp3Files = folderContents.files.filter((f) => f.endsWith(".mp3"));
-		const mp3List: Array<string> = [];
-		for (const mp3 of mp3Files) {
-			mp3List.push(mp3.split("/").pop()!);
-		}
-
-		new Setting(container).setName("Bases").setHeading();
-		new Setting(container).setName("On Hover").addDropdown(async (dropdown) => {
-			dropdown.addOption("none", "None").addOption("custom", "Custom");
-			for (const mp3 of mp3List) dropdown.addOption(mp3, mp3.replace(".mp3", ""));
-			dropdown.setValue(this.plugin.settings.bases_on_hover);
-			dropdown.onChange(async (value) => {
-				this.plugin.settings.bases_on_hover = value;
-				await this.plugin.saveSettings();
-				this.display();
-			});
-		});
-
-		if (this.plugin.settings.bases_on_hover == "custom") {
-			new Setting(container).setName("On Hover Custom Path").addText((text) =>
-				text
-					.setValue(this.plugin.settings.bases_on_hover_custom_path)
-					.onChange(async (value) => {
-						this.plugin.settings.bases_on_hover_custom_path = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-		}
+		this.containerEl.empty();
+		new Setting(this.containerEl).setName("General").setHeading();
+		await this.plugin.settings.sounds["startup"].display(this);
+		new Setting(this.containerEl).setName("Bases").setHeading();
+		await this.plugin.settings.sounds["bases_hover"].display(this);
+		new Setting(this.containerEl).setName("File").setHeading();
+		await this.plugin.settings.sounds["file_open"].display(this);
 	}
 }

@@ -1,7 +1,7 @@
 import { AudioElement, AudioState } from "./audio";
 import { FileHandler } from "./filehandler";
 import { App, Plugin, PluginManifest } from "obsidian";
-import { DEFAULT_SETTINGS, SoundifySettings, SoundifySettingsTab } from "./settings";
+import { SoundifySettings, SoundifySettingsTab } from "./settings";
 
 export default class Soundify extends Plugin {
 	public file: FileHandler;
@@ -13,26 +13,19 @@ export default class Soundify extends Plugin {
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
+		this.settings = new SoundifySettings();
 		this.file = new FileHandler(this.app.vault.adapter, manifest.id);
 	}
 
 	destructor() {
-		this.observer?.disconnect();
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()); // NOTE: does only shallow copy.
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
+		if (this.observer) this.observer.disconnect();
 	}
 
 	async onload() {
 		console.log("Unarchiving media.zip.");
 		await this.file.unzipLocalToLocal("media.zip");
 
-		await this.loadSettings();
+		await this.settings.load(this);
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
 
 		this.openFileAudio = new AudioElement(
