@@ -1,6 +1,6 @@
 {
 	"name": "soundify",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "This plugin allows for sounds to play on specific events. (https://github.com/solomonarul/soundify)",
 	"main": "main.js",
 	"scripts": {
@@ -8,7 +8,10 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": ["obisdian", "audio"],
+	"keywords": [
+		"obisdian",
+		"audio"
+	],
 	"author": "Solomonarul",
 	"license": "MIT",
 	"devDependencies": {

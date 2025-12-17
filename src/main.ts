@@ -32,7 +32,6 @@ export default class Soundify extends Plugin {
 	}
 
 	async unarchive_media(path: string) {
-		console.log(`Unarchiving ${path}.`);
 		await this.file.unzipLocalToLocal(path);
 	}
 
@@ -40,16 +39,14 @@ export default class Soundify extends Plugin {
 		const zipPath = this.file.getLocalPath("media.zip");
 		const mediaPath = this.file.getLocalPath("media");
 		const hashPath: string = this.file.getLocalPath("media/.hash");
-		const existingHash: string | null = await this.file.readString(hashPath);
-		const zipFingerprint: string = await this.file.fileFingerprint(zipPath);
+		const readHash: string | null = await this.file.readString(hashPath);
+		const zipHash: string = await this.file.fileFingerprint(zipPath);
 
-		if (!this.file.exists(mediaPath) || !existingHash || existingHash != zipFingerprint) {
+		if (!(await this.file.exists(mediaPath)) || !readHash || readHash != zipHash) {
 			await this.file.folderDelete(mediaPath);
 			await this.file.folderCreate(mediaPath);
 			await this.unarchive_media("media.zip");
-			await this.file.writeString(hashPath, zipFingerprint);
-		} else {
-			console.info("Media folder exists and is up to date.");
+			await this.file.writeString(hashPath, zipHash);
 		}
 
 		await this.settings.load(this);

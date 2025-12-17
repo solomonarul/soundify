@@ -40,7 +40,7 @@ export class FileHandler {
 	}
 
 	public async folderGetContents(path: string): Promise<ListedFiles> {
-		return this.adapter.list(path);
+		return await this.adapter.list(path);
 	}
 
 	public async readBinary(path: string): Promise<ArrayBuffer> {
@@ -73,19 +73,22 @@ export class FileHandler {
 		return `${stat.size}:${stat.mtime}`;
 	}
 
-	public async removeExtensionFromPath(path: string): Promise<string> {
+	public removeExtensionFromPath(path: string): string {
 		return path.replace(/\.[^/.]+$/, "");
 	}
 
 	public async unzipLocalToLocal(path: string, targetLocation?: string) {
-		const targetPath = await (!targetLocation
+		const targetPath = !targetLocation
 			? this.removeExtensionFromPath(path)
-			: this.removeExtensionFromPath(targetLocation));
+			: this.removeExtensionFromPath(targetLocation);
 
 		const localPath = this.getLocalPath(path);
 		const localFolder = this.getLocalPath(targetPath);
 
-		if (!this.exists(localPath)) console.error(`Archive at path ${localPath} doesn't exist.`);
+		if (!(await this.exists(localPath))) {
+			console.error(`Archive at path ${localPath} doesn't exist.`);
+			return;
+		}
 
 		const zipReader = new zip.ZipReader(
 			new zip.BlobReader(
@@ -112,7 +115,5 @@ export class FileHandler {
 			if (await this.exists(filePath)) continue; // TODO: override?
 			await this.writeBinary(filePath, await fileData.arrayBuffer());
 		}
-
-		console.info(`Unzipped ${path}.`);
 	}
 }

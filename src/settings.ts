@@ -13,30 +13,34 @@ export class SerializableSetting {
 
 export class SoundSetting extends Listening<SoundSetting> {
 	data: SerializableSetting;
-	mediaFolder: string;
 	actionText: string;
+	mediaFolder: string;
+	fileList: Array<string>;
 
-	constructor(mediaFolder: string, actionText: string) {
+	constructor(actionText: string) {
 		super();
 		this.data = new SerializableSetting();
-		this.mediaFolder = mediaFolder;
 		this.actionText = actionText;
 	}
 
-	async display(parent: SoundifySettingsTab) {
-		const mp3Folder = parent.plugin.file.getLocalPath(this.mediaFolder);
-		const folderContents = await parent.plugin.file.folderGetContents(mp3Folder);
-		const mp3Files = folderContents.files.filter((f) => f.endsWith(".mp3")); // TODO: do not scan on every display.
-		const mp3List: Array<string> = [];
+	async load(plugin: Soundify, mediaFolder: string) {
+		this.mediaFolder = mediaFolder;
+		const folderContents = await plugin.file.folderGetContents(
+			plugin.file.getLocalPath(mediaFolder),
+		);
+		this.fileList = [];
+		const mp3Files = folderContents.files.filter((f) => f.endsWith(".mp3"));
 		for (const mp3 of mp3Files) {
 			const mp3Name = mp3.split("/").pop();
 			if (!mp3Name) continue;
-			mp3List.push(mp3Name);
+			this.fileList.push(mp3Name);
 		} // TODO: not only mp3s.
+	}
 
+	display(parent: SoundifySettingsTab) {
 		new Setting(parent.containerEl).setName(this.actionText).addDropdown(async (dropdown) => {
 			dropdown.addOption("none", "None").addOption("custom", "Custom");
-			for (const mp3 of mp3List) dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
+			for (const mp3 of this.fileList) dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
 			dropdown.setValue(this.data.type);
 			dropdown.onChange(async (value) => {
 				const shouldRefresh: boolean =
@@ -44,7 +48,7 @@ export class SoundSetting extends Listening<SoundSetting> {
 					(this.data.type != "custom" && value == "custom");
 				this.data.type = value;
 				await parent.plugin.settings.save(parent.plugin);
-				if (shouldRefresh) await parent.display(); // Reload display menu on the fly.
+				if (shouldRefresh) parent.display(); // Reload display menu on the fly.
 				this.notify(this);
 			});
 		});
@@ -80,9 +84,9 @@ export class SoundSetting extends Listening<SoundSetting> {
 
 export const DEFAULT_SETTINGS: Partial<SoundifySettings> = {
 	sounds: {
-		startup: new SoundSetting("media/startup", "Startup"),
-		bases_hover: new SoundSetting("media/basesHover", "Card Hover"),
-		file_open: new SoundSetting("media/openFile", "Open"),
+		startup: new SoundSetting("Startup"),
+		bases_hover: new SoundSetting("Card Hover"),
+		file_open: new SoundSetting("Open"),
 	},
 };
 
@@ -93,12 +97,13 @@ export class SoundifySettings {
 		const data = await plugin.loadData();
 		this.sounds = {};
 		for (const [key, defaultSetting] of Object.entries(DEFAULT_SETTINGS.sounds ?? {})) {
-			const setting = new SoundSetting(defaultSetting.mediaFolder, defaultSetting.actionText);
+			const setting = new SoundSetting(defaultSetting.actionText);
 			if (data?.sounds?.[key]) {
 				const serialized = data.sounds[key] as SerializableSetting;
 				setting.data = serialized;
-				if (!plugin.file.exists(setting.getPath()))
+				if (!(await plugin.file.exists(setting.getPath())))
 					setting.data = new SerializableSetting();
+				setting.load(plugin, `media/${key}`);
 			}
 			this.sounds[key] = setting;
 		}
@@ -119,14 +124,14 @@ export class SoundifySettingsTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	async display() {
+	display() {
 		if (!this.plugin.file) return;
 		this.containerEl.empty();
-		new Setting(this.containerEl).setName("General").setHeading();
-		await this.plugin.settings.sounds["startup"].display(this);
 		new Setting(this.containerEl).setName("Bases").setHeading();
-		await this.plugin.settings.sounds["bases_hover"].display(this);
+		this.plugin.settings.sounds["bases_hover"].display(this);
 		new Setting(this.containerEl).setName("File").setHeading();
-		await this.plugin.settings.sounds["file_open"].display(this);
+		this.plugin.settings.sounds["file_open"].display(this);
+		new Setting(this.containerEl).setName("Others").setHeading();
+		this.plugin.settings.sounds["startup"].display(this);
 	}
 }
