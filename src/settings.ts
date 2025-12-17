@@ -103,7 +103,7 @@ export class SoundifySettings {
 				setting.data = serialized;
 				if (!(await plugin.file.exists(setting.getPath())))
 					setting.data = new SerializableSetting();
-				setting.load(plugin, `media/${key}`);
+				await setting.load(plugin, `media/${key}`);
 			}
 			this.sounds[key] = setting;
 		}
