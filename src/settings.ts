@@ -11,6 +11,10 @@ export class SerializableSetting {
 	path: string;
 }
 
+interface PersistedSoundifySettings {
+	sounds?: Record<string, SerializableSetting>;
+}
+
 export class SoundSetting extends Listening<SoundSetting> {
 	data: SerializableSetting;
 	actionText: string;
@@ -82,24 +86,23 @@ export class SoundSetting extends Listening<SoundSetting> {
 	}
 }
 
-export const DEFAULT_SETTINGS: Partial<SoundifySettings> = {
-	sounds: {
-		startup: new SoundSetting("Startup"),
-		bases_hover: new SoundSetting("Card Hover"),
-		file_open: new SoundSetting("Open"),
-	},
+// TODO: replace strings with keys for a future localization.
+export const DEFAULT_SETTING_NAMES: Record<string, string> = {
+	startup: "Startup",
+	bases_hover: "Card Hover",
+	file_open: "Open",
 };
 
 export class SoundifySettings {
 	sounds: Record<string, SoundSetting> = {};
 
 	async load(plugin: Soundify) {
-		const data = await plugin.loadData();
+		const data = (await plugin.loadData()) as PersistedSoundifySettings | undefined;
 		this.sounds = {};
-		for (const [key, defaultSetting] of Object.entries(DEFAULT_SETTINGS.sounds ?? {})) {
-			const setting = new SoundSetting(defaultSetting.actionText);
+		for (const [key, text] of Object.entries(DEFAULT_SETTING_NAMES)) {
+			const setting = new SoundSetting(text);
 			if (data?.sounds?.[key]) {
-				const serialized = data.sounds[key] as SerializableSetting;
+				const serialized = data.sounds[key];
 				setting.data = serialized;
 				if (!(await plugin.file.exists(setting.getPath())))
 					setting.data = new SerializableSetting();

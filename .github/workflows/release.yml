@@ -32,4 +32,4 @@ jobs:
                   gh release create "$tag" \
                     --title="$tag" \
                     --draft \
-                    main.js manifest.json styles.css media.zip
+                    main.js manifest.json src/css/styles.css media.zip
