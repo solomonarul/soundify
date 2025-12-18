@@ -1,4 +1,4 @@
-import { MaybeAudioElement, AudioElement, AudioState } from "./audio";
+import { MaybeAudioElement, AudioElement } from "./audio";
 import { FileHandler } from "./filehandler";
 import { App, Plugin, PluginManifest } from "obsidian";
 import { SoundifySettings, SoundifySettingsTab, SoundSetting } from "./settings";
@@ -57,11 +57,16 @@ export default class Soundify extends Plugin {
 		this.ensure_sound_loaded("startup");
 
 		this.enableObserver();
+
+		let file_open_play_flag: boolean = false;
 		this.registerEvent(
 			this.app.workspace.on("file-open", () => {
 				if (!this.sounds["file_open"]) return;
-				if (this.sounds["startup"] && this.sounds["startup"].state == AudioState.PLAYING)
+				if (!file_open_play_flag) {
+					file_open_play_flag = true;
 					return;
+					// This ensures the sound doesn't play when the app starts with a loaded file and lets the startup sound take precedence.
+				}
 				this.sounds["file_open"].setPosition(0);
 				this.sounds["file_open"].play();
 			}),

@@ -104,9 +104,19 @@ export class SoundifySettings {
 			if (data?.sounds?.[key]) {
 				const serialized = data.sounds[key];
 				setting.data = serialized;
-				if (!(await plugin.file.exists(setting.getPath())))
-					setting.data = new SerializableSetting();
+
 				await setting.load(plugin, `media/${key}`);
+				const path = setting.getPath();
+				if (
+					!(await plugin.file.exists(
+						setting.data.type != "custom" ? plugin.file.getLocalPath(path) : path,
+					))
+				) {
+					console.warn(
+						`Sound of event with id: ${key} at path: ${path} doesn't exist, clearing...`,
+					);
+					setting.data = new SerializableSetting();
+				}
 			}
 			this.sounds[key] = setting;
 		}
