@@ -93,6 +93,8 @@ export const DEFAULT_SETTING_NAMES: Record<string, string> = {
 	bases_hover: "Card Hover",
 	bases_click: "Card Click",
 	file_open: "Open",
+	key_down: "Key Pressed",
+	key_up: "Key Released",
 };
 
 export class SoundifySettings {
@@ -147,6 +149,9 @@ export class SoundifySettingsTab extends PluginSettingTab {
 		this.plugin.settings.sounds["bases_click"].display(this);
 		new Setting(this.containerEl).setName("File").setHeading();
 		this.plugin.settings.sounds["file_open"].display(this);
+		new Setting(this.containerEl).setName("Keys").setHeading();
+		this.plugin.settings.sounds["key_down"].display(this);
+		this.plugin.settings.sounds["key_up"].display(this);
 		new Setting(this.containerEl).setName("Others").setHeading();
 		this.plugin.settings.sounds["startup"].display(this);
 	}

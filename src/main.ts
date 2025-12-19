@@ -57,6 +57,8 @@ export default class Soundify extends Plugin {
 		this.ensure_sound_loaded("bases_hover");
 		this.ensure_sound_loaded("file_open");
 		this.ensure_sound_loaded("startup");
+		this.ensure_sound_loaded("key_down");
+		this.ensure_sound_loaded("key_up");
 
 		this.enableObserver();
 
@@ -83,6 +85,20 @@ export default class Soundify extends Plugin {
 			this.sounds["startup"].setPosition(0);
 			this.sounds["startup"].play();
 		}
+
+		document.addEventListener("keydown", (e) => {
+			if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+			if (!this.sounds["key_down"]) return;
+			this.sounds["key_down"].setPosition(0);
+			this.sounds["key_down"].play();
+		});
+
+		document.addEventListener("keyup", (e) => {
+			if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+			if (!this.sounds["key_up"]) return;
+			this.sounds["key_up"].setPosition(0);
+			this.sounds["key_up"].play();
+		});
 	}
 
 	onunload() {
