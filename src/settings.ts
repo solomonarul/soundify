@@ -44,7 +44,8 @@ export class SoundSetting extends Listening<SoundSetting> {
 	display(parent: SoundifySettingsTab) {
 		new Setting(parent.containerEl).setName(this.actionText).addDropdown(async (dropdown) => {
 			dropdown.addOption("none", "None").addOption("custom", "Custom");
-			for (const mp3 of this.fileList) dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
+			if (this.fileList)
+				for (const mp3 of this.fileList) dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
 			dropdown.setValue(this.data.type);
 			dropdown.onChange(async (value) => {
 				const shouldRefresh: boolean =
@@ -79,7 +80,7 @@ export class SoundSetting extends Listening<SoundSetting> {
 			case "none":
 				return "";
 			case "custom":
-				return this.data.path;
+				return this.data.path;	// TODO: this is relative to plugin path, should be relative to vault path.
 			default:
 				return `${this.mediaFolder}/${this.data.type}`;
 		}
@@ -90,6 +91,7 @@ export class SoundSetting extends Listening<SoundSetting> {
 export const DEFAULT_SETTING_NAMES: Record<string, string> = {
 	startup: "Startup",
 	bases_hover: "Card Hover",
+	bases_click: "Card Click",
 	file_open: "Open",
 };
 
@@ -142,6 +144,7 @@ export class SoundifySettingsTab extends PluginSettingTab {
 		this.containerEl.empty();
 		new Setting(this.containerEl).setName("Bases").setHeading();
 		this.plugin.settings.sounds["bases_hover"].display(this);
+		this.plugin.settings.sounds["bases_click"].display(this);
 		new Setting(this.containerEl).setName("File").setHeading();
 		this.plugin.settings.sounds["file_open"].display(this);
 		new Setting(this.containerEl).setName("Others").setHeading();

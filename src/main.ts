@@ -1,4 +1,4 @@
-import { MaybeAudioElement, AudioElement } from "./audio";
+import { MaybeAudioElement, AudioElement, AudioState } from "./audio";
 import { FileHandler } from "./filehandler";
 import { App, Plugin, PluginManifest } from "obsidian";
 import { SoundifySettings, SoundifySettingsTab, SoundSetting } from "./settings";
@@ -52,21 +52,28 @@ export default class Soundify extends Plugin {
 		await this.settings.load(this);
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
 
+		// TODO: replace with scan of media/
+		this.ensure_sound_loaded("bases_click");
 		this.ensure_sound_loaded("bases_hover");
 		this.ensure_sound_loaded("file_open");
 		this.ensure_sound_loaded("startup");
 
 		this.enableObserver();
 
-		let file_open_play_flag: boolean = false;
 		this.registerEvent(
 			this.app.workspace.on("file-open", () => {
 				if (!this.sounds["file_open"]) return;
-				if (!file_open_play_flag) {
-					file_open_play_flag = true;
+
+				// This ensures the sound doesn't play when the app starts with a loaded file and lets the startup sound take precedence.
+				if (this.sounds["startup"] && this.sounds["startup"].state == AudioState.PLAYING)
 					return;
-					// This ensures the sound doesn't play when the app starts with a loaded file and lets the startup sound take precedence.
-				}
+
+				if (
+					this.sounds["bases_click"] &&
+					this.sounds["bases_click"].state == AudioState.PLAYING
+				)
+					return;
+
 				this.sounds["file_open"].setPosition(0);
 				this.sounds["file_open"].play();
 			}),
@@ -97,6 +104,7 @@ export default class Soundify extends Plugin {
 		document.querySelectorAll(".bases-cards-item").forEach((card) => {
 			const el = card as HTMLElement & {
 				_hoverSoundHandler?: EventListener;
+				_clickSoundHandler?: EventListener;
 			};
 			if (el._hoverSoundHandler) el.removeEventListener("mouseenter", el._hoverSoundHandler);
 			el._hoverSoundHandler = () => {
@@ -105,6 +113,14 @@ export default class Soundify extends Plugin {
 				this.sounds["bases_hover"].play();
 			};
 			el.addEventListener("mouseenter", el._hoverSoundHandler);
+
+			if (el._clickSoundHandler) el.removeEventListener("mouseup", el._clickSoundHandler);
+			el._clickSoundHandler = () => {
+				if (!this.sounds["bases_click"]) return;
+				this.sounds["bases_click"].setPosition(0);
+				this.sounds["bases_click"].play();
+			};
+			el.addEventListener("mouseup", el._clickSoundHandler);
 		});
 	}
 }
