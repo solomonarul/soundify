@@ -23,7 +23,10 @@ export default class Soundify extends Plugin {
 	ensure_sound_loaded(sound: string): void {
 		const updateAudio = (setting: SoundSetting) => {
 			this.sounds[sound] = setting.isValid()
-				? new AudioElement(this.file.getLocalResource(setting.getPath()), setting.data.volume)
+				? new AudioElement(
+						this.file.getLocalResource(setting.getPath()),
+						setting.data.volume,
+					)
 				: null;
 		};
 		const setting = this.settings.sounds[sound];
@@ -132,7 +135,9 @@ export default class Soundify extends Plugin {
 			el._hoverSoundHandler = () => {
 				if (!this.sounds["bases_hover"]) return;
 				this.sounds["bases_hover"].setPosition(0);
-				this.sounds["bases_hover"].setVolume(this.settings.sounds["bases_hover"].data.volume);
+				this.sounds["bases_hover"].setVolume(
+					this.settings.sounds["bases_hover"].data.volume,
+				);
 				this.sounds["bases_hover"].play();
 			};
 			el.addEventListener("mouseenter", el._hoverSoundHandler);
@@ -141,7 +146,9 @@ export default class Soundify extends Plugin {
 			el._clickSoundHandler = () => {
 				if (!this.sounds["bases_click"]) return;
 				this.sounds["bases_click"].setPosition(0);
-				this.sounds["bases_click"].setVolume(this.settings.sounds["bases_click"].data.volume);
+				this.sounds["bases_click"].setVolume(
+					this.settings.sounds["bases_click"].data.volume,
+				);
 				this.sounds["bases_click"].play();
 			};
 			el.addEventListener("mouseup", el._clickSoundHandler);

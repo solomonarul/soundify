@@ -73,11 +73,15 @@ export class SoundSetting extends Listening<SoundSetting> {
 		}
 
 		new Setting(parent.containerEl).setName("Volume").addSlider(async (slider) => {
-			slider.setLimits(0, 1, "any").setValue(this.data.volume).onChange(async (value) => {
-				this.data.volume = value;
-				await parent.plugin.settings.save(parent.plugin);
-			}).setDynamicTooltip();
-		})
+			slider
+				.setLimits(0, 1, "any")
+				.setValue(this.data.volume)
+				.onChange(async (value) => {
+					this.data.volume = value;
+					await parent.plugin.settings.save(parent.plugin);
+				})
+				.setDynamicTooltip();
+		});
 	}
 
 	isValid(): boolean {
