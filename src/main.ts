@@ -23,7 +23,7 @@ export default class Soundify extends Plugin {
 	ensure_sound_loaded(sound: string): void {
 		const updateAudio = (setting: SoundSetting) => {
 			this.sounds[sound] = setting.isValid()
-				? new AudioElement(this.file.getLocalResource(setting.getPath()))
+				? new AudioElement(this.file.getLocalResource(setting.getPath()), setting.data.volume)
 				: null;
 		};
 		const setting = this.settings.sounds[sound];
@@ -77,12 +77,14 @@ export default class Soundify extends Plugin {
 					return;
 
 				this.sounds["file_open"].setPosition(0);
+				this.sounds["file_open"].setVolume(this.settings.sounds["file_open"].data.volume);
 				this.sounds["file_open"].play();
 			}),
 		);
 
 		if (this.sounds["startup"]) {
 			this.sounds["startup"].setPosition(0);
+			this.sounds["startup"].setVolume(this.settings.sounds["startup"].data.volume);
 			this.sounds["startup"].play();
 		}
 
@@ -90,6 +92,7 @@ export default class Soundify extends Plugin {
 			if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
 			if (!this.sounds["key_down"]) return;
 			this.sounds["key_down"].setPosition(0);
+			this.sounds["key_down"].setVolume(this.settings.sounds["key_down"].data.volume);
 			this.sounds["key_down"].play();
 		});
 
@@ -97,6 +100,7 @@ export default class Soundify extends Plugin {
 			if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
 			if (!this.sounds["key_up"]) return;
 			this.sounds["key_up"].setPosition(0);
+			this.sounds["key_up"].setVolume(this.settings.sounds["key_up"].data.volume);
 			this.sounds["key_up"].play();
 		});
 	}
@@ -126,6 +130,7 @@ export default class Soundify extends Plugin {
 			el._hoverSoundHandler = () => {
 				if (!this.sounds["bases_hover"]) return;
 				this.sounds["bases_hover"].setPosition(0);
+				this.sounds["bases_hover"].setVolume(this.settings.sounds["bases_hover"].data.volume);
 				this.sounds["bases_hover"].play();
 			};
 			el.addEventListener("mouseenter", el._hoverSoundHandler);
@@ -134,6 +139,7 @@ export default class Soundify extends Plugin {
 			el._clickSoundHandler = () => {
 				if (!this.sounds["bases_click"]) return;
 				this.sounds["bases_click"].setPosition(0);
+				this.sounds["bases_click"].setVolume(this.settings.sounds["bases_click"].data.volume);
 				this.sounds["bases_click"].play();
 			};
 			el.addEventListener("mouseup", el._clickSoundHandler);

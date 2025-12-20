@@ -6,9 +6,11 @@ export class SerializableSetting {
 	constructor() {
 		this.type = "none";
 		this.path = "";
+		this.volume = 1.0;
 	}
 	type: string;
 	path: string;
+	volume: number;
 }
 
 interface PersistedSoundifySettings {
@@ -69,6 +71,13 @@ export class SoundSetting extends Listening<SoundSetting> {
 					}),
 				);
 		}
+
+		new Setting(parent.containerEl).setName("Volume").addSlider(async (slider) => {
+			slider.setLimits(0, 1, "any").setValue(this.data.volume).onChange(async (value) => {
+				this.data.volume = value;
+				await parent.plugin.settings.save(parent.plugin);
+			}).setDynamicTooltip();
+		})
 	}
 
 	isValid(): boolean {
@@ -80,7 +89,7 @@ export class SoundSetting extends Listening<SoundSetting> {
 			case "none":
 				return "";
 			case "custom":
-				return this.data.path;	// TODO: this is relative to plugin path, should be relative to vault path.
+				return this.data.path; // TODO: this is relative to plugin path, should be relative to vault path.
 			default:
 				return `${this.mediaFolder}/${this.data.type}`;
 		}
