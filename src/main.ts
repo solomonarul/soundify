@@ -60,6 +60,8 @@ export default class Soundify extends Plugin {
 		this.ensure_sound_loaded("key_down");
 		this.ensure_sound_loaded("key_up");
 
+		// TODO: figure out why scanning works only if we have data.json, otherwise there will be no default options specified on load.
+
 		this.enableObserver();
 
 		this.registerEvent(

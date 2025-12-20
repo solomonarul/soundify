@@ -1,8 +1,6 @@
 # Soundify
 
-Play sounds on specific events.
-
-The sounds can be changed from the plugin settings to any preset / custom sound.
+Play sounds on specific events. Everything is configurable in the settings menu.
 
 For using this while developing, check out the Makefile.
 
