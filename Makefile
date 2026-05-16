@@ -18,12 +18,12 @@ b: i
 	@cp src/styles.css build/styles.css
 
 c:
-	@rm -fr node_modules build package-lock.json media main.js
+	@rm -fr node_modules build package-lock.json media main.js data.json
 
 pd:
-	@git tag -d 0.2.0
-	@git push origin :refs/tags/0.2.0
+	@git tag -d 0.2.1
+	@git push origin :refs/tags/0.2.1
 
 p:
-	@git tag -a 0.2.0 -m "0.2.0"
-	@git push origin 0.2.0
+	@git tag -a 0.2.1 -m "0.2.1"
+	@git push origin 0.2.1

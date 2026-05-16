@@ -56,6 +56,8 @@ export default class Soundify extends Plugin {
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));
 
 		// TODO: replace with scan of media/
+		this.ensure_sound_loaded("checkbox_on");
+		this.ensure_sound_loaded("checkbox_off");
 		this.ensure_sound_loaded("bases_click");
 		this.ensure_sound_loaded("bases_hover");
 		this.ensure_sound_loaded("file_open");
@@ -117,12 +119,14 @@ export default class Soundify extends Plugin {
 	private enableObserver() {
 		this.observer = new MutationObserver(() => {
 			this.attachBasesHoverListeners();
+			this.attachCheckboxListeners();
 		});
 		this.observer.observe(document.body, {
 			childList: true,
 			subtree: true,
 		});
 		this.attachBasesHoverListeners();
+		this.attachCheckboxListeners();
 	}
 
 	private attachBasesHoverListeners() {
@@ -152,6 +156,27 @@ export default class Soundify extends Plugin {
 				this.sounds["bases_click"].play();
 			};
 			el.addEventListener("mouseup", el._clickSoundHandler);
+		});
+	}
+
+	private attachCheckboxListeners() {
+		document.querySelectorAll(".metadata-input-checkbox").forEach((checkbox) => {
+			const el = checkbox as HTMLInputElement & { _soundHandler?: EventListener };
+
+			if (el._soundHandler) el.removeEventListener("click", el._soundHandler);
+
+			el._soundHandler = () => {
+				const soundKey = el.checked ? "checkbox_on" : "checkbox_off";
+				const sound = this.sounds[soundKey];
+
+				if (sound) {
+					sound.setPosition(0);
+					sound.setVolume(this.settings.sounds[soundKey].data.volume);
+					sound.play();
+				}
+			};
+
+			el.addEventListener("click", el._soundHandler);
 		});
 	}
 }

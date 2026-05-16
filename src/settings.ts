@@ -18,14 +18,13 @@ interface PersistedSoundifySettings {
 }
 
 export class SoundSetting extends Listening<SoundSetting> {
-	data: SerializableSetting;
+	data: SerializableSetting = new SerializableSetting();
 	actionText: string;
-	mediaFolder: string;
-	fileList: Array<string>;
+	mediaFolder: string = "";
+	fileList: Array<string> = new Array<string>();
 
 	constructor(actionText: string) {
 		super();
-		this.data = new SerializableSetting();
 		this.actionText = actionText;
 	}
 
@@ -47,8 +46,11 @@ export class SoundSetting extends Listening<SoundSetting> {
 		new Setting(parent.containerEl).setName(this.actionText).addDropdown(async (dropdown) => {
 			dropdown.addOption("none", "None").addOption("custom", "Custom");
 			if (this.fileList)
-				for (const mp3 of this.fileList) dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
+				for (const mp3 of this.fileList)
+					dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
+			
 			dropdown.setValue(this.data.type);
+			
 			dropdown.onChange(async (value) => {
 				const shouldRefresh: boolean =
 					(this.data.type == "custom" && value != "custom") ||
@@ -108,6 +110,8 @@ export const DEFAULT_SETTING_NAMES: Record<string, string> = {
 	file_open: "Open",
 	key_down: "Key Pressed",
 	key_up: "Key Released",
+	checkbox_on: "Check",
+	checkbox_off: "Uncheck",
 };
 
 export class SoundifySettings {
@@ -165,6 +169,9 @@ export class SoundifySettingsTab extends PluginSettingTab {
 		new Setting(this.containerEl).setName("Keys").setHeading();
 		this.plugin.settings.sounds["key_down"].display(this);
 		this.plugin.settings.sounds["key_up"].display(this);
+		new Setting(this.containerEl).setName("Checkbox").setHeading();
+		this.plugin.settings.sounds["checkbox_on"].display(this);
+		this.plugin.settings.sounds["checkbox_off"].display(this);
 		new Setting(this.containerEl).setName("Others").setHeading();
 		this.plugin.settings.sounds["startup"].display(this);
 	}
