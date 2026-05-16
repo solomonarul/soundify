@@ -46,11 +46,10 @@ export class SoundSetting extends Listening<SoundSetting> {
 		new Setting(parent.containerEl).setName(this.actionText).addDropdown(async (dropdown) => {
 			dropdown.addOption("none", "None").addOption("custom", "Custom");
 			if (this.fileList)
-				for (const mp3 of this.fileList)
-					dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
-			
+				for (const mp3 of this.fileList) dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
+
 			dropdown.setValue(this.data.type);
-			
+
 			dropdown.onChange(async (value) => {
 				const shouldRefresh: boolean =
 					(this.data.type == "custom" && value != "custom") ||
@@ -122,11 +121,12 @@ export class SoundifySettings {
 		this.sounds = {};
 		for (const [key, text] of Object.entries(DEFAULT_SETTING_NAMES)) {
 			const setting = new SoundSetting(text);
+			await setting.load(plugin, `media/${key}`);
+
 			if (data?.sounds?.[key]) {
 				const serialized = data.sounds[key];
 				setting.data = serialized;
 
-				await setting.load(plugin, `media/${key}`);
 				const path = setting.getPath();
 				if (
 					!(await plugin.file.exists(
