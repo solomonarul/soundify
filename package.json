@@ -1,6 +1,6 @@
 {
 	"name": "soundify",
-	"version": "0.2.2",
+	"version": "0.3.0",
 	"description": "This plugin allows for sounds to play on specific events. (https://github.com/solomonarul/soundify)",
 	"main": "main.js",
 	"scripts": {
