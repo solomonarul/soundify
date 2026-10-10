@@ -22,16 +22,22 @@ export default class Soundify extends Plugin {
 
 	ensure_sound_loaded(sound: string): void {
 		const updateAudio = (setting: SoundSetting) => {
-			this.sounds[sound] = setting.isValid()
+			this.sounds[sound] = setting.getPath() != ""
 				? new AudioElement(
 						this.file.getLocalResource(setting.getPath()),
 						setting.data.volume,
 					)
 				: null;
 		};
+
 		const setting = this.settings.sounds[sound];
 		updateAudio(setting);
 		setting.addListener(updateAudio);
+	}
+
+	async ensure_folder_exists(path: string): Promise<void> {
+		if (!(await this.file.exists(path)))
+			await this.file.folderCreate(path);
 	}
 
 	async unarchive_media(path: string) {
@@ -39,18 +45,34 @@ export default class Soundify extends Plugin {
 	}
 
 	async onload() {
-		const zipPath = this.file.getLocalPath("media.zip");
 		const mediaPath = this.file.getLocalPath("media");
-		const hashPath: string = this.file.getLocalPath("media/.hash");
-		const readHash: string | null = await this.file.readString(hashPath);
-		const zipHash: string = await this.file.fileFingerprint(zipPath);
 
-		if (!(await this.file.exists(mediaPath)) || !readHash || readHash != zipHash) {
-			await this.file.folderDelete(mediaPath);
-			await this.file.folderCreate(mediaPath);
-			await this.unarchive_media("media.zip");
-			await this.file.writeString(hashPath, zipHash);
+		if(await this.file.exists(this.file.getLocalPath("media.zip")))
+		{
+			const zipPath = this.file.getLocalPath("media.zip");
+			
+			const hashPath: string = mediaPath + "/.hash";
+			const readHash: string | null = await this.file.readString(hashPath);
+			const zipHash: string = await this.file.fileFingerprint(zipPath);
+			if (!(await this.file.exists(mediaPath)) || !readHash || readHash != zipHash) {
+				await this.file.folderDelete(mediaPath);
+				await this.file.folderCreate(mediaPath);
+				await this.unarchive_media("media.zip");
+				await this.file.writeString(hashPath, zipHash);
+			}
 		}
+		else
+			await this.ensure_folder_exists(mediaPath);
+
+
+		await this.ensure_folder_exists(`${mediaPath}/checkbox_on`);
+		await this.ensure_folder_exists(`${mediaPath}/checkbox_off`);
+		await this.ensure_folder_exists(`${mediaPath}/bases_click`);
+		await this.ensure_folder_exists(`${mediaPath}/bases_hover`);
+		await this.ensure_folder_exists(`${mediaPath}/file_open`);
+		await this.ensure_folder_exists(`${mediaPath}/startup`);
+		await this.ensure_folder_exists(`${mediaPath}/key_down`);
+		await this.ensure_folder_exists(`${mediaPath}/key_up`);
 
 		await this.settings.load(this);
 		this.addSettingTab(new SoundifySettingsTab(this.app, this));

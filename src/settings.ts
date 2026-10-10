@@ -4,7 +4,6 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 
 export class SerializableSetting {
 	constructor() {
-		this.type = "none";
 		this.path = "";
 		this.volume = 1.0;
 	}
@@ -44,34 +43,19 @@ export class SoundSetting extends Listening<SoundSetting> {
 
 	display(parent: SoundifySettingsTab) {
 		new Setting(parent.containerEl).setName(this.actionText).addDropdown(async (dropdown) => {
-			dropdown.addOption("none", "None").addOption("custom", "Custom");
+			dropdown.addOption("", "None");
 			if (this.fileList)
 				for (const mp3 of this.fileList) dropdown.addOption(mp3, mp3.replace(".mp3", "")); // TODO: not only mp3s
 
-			dropdown.setValue(this.data.type);
+			dropdown.setValue(this.data.path);
 
 			dropdown.onChange(async (value) => {
-				const shouldRefresh: boolean =
-					(this.data.type == "custom" && value != "custom") ||
-					(this.data.type != "custom" && value == "custom");
-				this.data.type = value;
+				this.data.path = value;
 				await parent.plugin.settings.save(parent.plugin);
-				if (shouldRefresh) parent.display(); // Reload display menu on the fly.
+				parent.display(); // Reload display menu on the fly.
 				this.notify(this);
 			});
 		});
-
-		if (this.data.type == "custom") {
-			new Setting(parent.containerEl)
-				.setName(`${this.actionText} Custom Path`)
-				.addText((text) =>
-					text.setValue(this.data.path).onChange(async (value) => {
-						this.data.path = value;
-						await parent.plugin.settings.save(parent.plugin);
-						this.notify(this);
-					}),
-				);
-		}
 
 		new Setting(parent.containerEl).setName("Volume").addSlider(async (slider) => {
 			slider
@@ -85,19 +69,10 @@ export class SoundSetting extends Listening<SoundSetting> {
 		});
 	}
 
-	isValid(): boolean {
-		return this.data.type != "none";
-	}
-
 	getPath(): string {
-		switch (this.data.type) {
-			case "none":
-				return "";
-			case "custom":
-				return this.data.path; // TODO: this is relative to plugin path, should be relative to vault path.
-			default:
-				return `${this.mediaFolder}/${this.data.type}`;
-		}
+		if(this.data.path == "")
+			return "";
+		return `${this.mediaFolder}/${this.data.path}`;
 	}
 }
 
